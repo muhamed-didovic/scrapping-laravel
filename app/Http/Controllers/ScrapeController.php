@@ -15,12 +15,12 @@ class ScrapeController extends Controller
     {
         $crawler = [];
         for ($i = 1; $i <= 8; $i++) {
-            array_push($crawler, Goutte::request('GET', 'http://209.234.181.18:880/auto/00' . $i));
+            $crawler[] = Goutte::request('GET', 'http://209.234.181.18:880/auto/00' . $i);
         }
-
+        //dd(22);
         $counter = 0;
         foreach ($crawler as $c) {
-            list($deviceName, $jsonData) = $this->scrape($c);
+            [$deviceName, $jsonData] = $this->scrape($c);
             //todo: add error handling
             if (!empty($deviceName)) {
                 $counter++;
@@ -31,7 +31,6 @@ class ScrapeController extends Controller
                 ]);
             }
         }
-        //dump($crawler);
         return view('water', compact('crawler', 'counter'));
     }
 
@@ -73,13 +72,30 @@ class ScrapeController extends Controller
             $value = str_replace("&nbsp", "", $value);
             return $value;
         }, $values);
-
-        //check if devices are OFFLINE or no DATA is available like '-----'
-        if ($v[0] === 'OFFLINE' || $v[1] === 'OFFLINE'
-            || $v[0] === '-----' || $v[1] === '-----'
-        ) {
+        
+        //check if we get data
+        if (empty($v)) {
             return [[], []];
         }
+    
+        //check if devices are OFFLINE or no DATA is available like '-----'
+        $invalidTokens = ['OFFLINE', '-----', 'Authorization Required', ''];
+        
+        if (collect($v)->contains(function($a) use ($invalidTokens){
+            if (in_array($a, $invalidTokens)) {
+                return true;
+            }
+        })){
+            return [[], []];
+        }
+        
+//        if ($v[0] === ''
+//            || $v[1] === 'OFFLINE'
+//            || $v[0] === ''
+//            || $v[1] === '-----'
+//        ) {
+//            return [[], []];
+//        }
 
         $jsonData = json_encode(array_combine($k, $v));
         return array($deviceName, $jsonData);

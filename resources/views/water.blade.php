@@ -5,6 +5,6 @@
         <div class="title m-b-md">
             WATER
         </div>
-        <p>Successfully scraped {{ count($crawler) }} pages, and {{$counter}} are ONLINE</p>
+        <p>Trying to scrape {{ count($crawler ?? []) }} pages, and {{$counter ?? 0}} are ONLINE</p>
     </div>
 @endsection
